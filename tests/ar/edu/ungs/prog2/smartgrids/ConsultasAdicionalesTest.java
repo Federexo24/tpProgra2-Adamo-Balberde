@@ -7,10 +7,17 @@ import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * Pruebas complementarias a las de la cátedra.
+ * Verifican límites de fechas, agrupación por hora, limpieza, ordenamiento y protección de los datos.
+ */
 public class ConsultasAdicionalesTest {
     private SmartGrids sistema;
     private static final String INICIO = "2026-01-01T00:00:00";
 
+    /**
+     * Crea un sistema nuevo con una planta de cada tipo antes de cada prueba, evitando compartir estado.
+     */
     @Before
     public void preparar() {
         sistema = new SmartGrids();
@@ -20,6 +27,9 @@ public class ConsultasAdicionalesTest {
         sistema.registrarPlantaTermica("Termica", "Ruta 4", 600, INICIO, "Gas", 50, 900);
     }
 
+    /**
+     * Verifica resultados iniciales: arreglos en cero, plantas sin cuota cumplida y limpieza sin eliminaciones.
+     */
     @Test
     public void consultasSinRegistros() {
         assertArrayEquals(new int[24], sistema.incidenciasPorHora("Solar"));
@@ -30,6 +40,9 @@ public class ConsultasAdicionalesTest {
         assertEquals(0, sistema.limpiarMonitoreosSinDatos());
     }
 
+    /**
+     * Comprueba que el histograma incluya ambos días límite y descarte registros externos o que no cumplan.
+     */
     @Test
     public void histogramaIncluyeExtremosYCuentaDiasEnCadaHora() {
         sistema.registrarMonitoreo("Solar", "2026-02-28T23:00:00", 300, 0);
@@ -47,6 +60,9 @@ public class ConsultasAdicionalesTest {
         assertArrayEquals(diaUnico, sistema.histogramaCumplimiento("Solar", "2026-03-02", "2026-03-02"));
     }
 
+    /**
+     * Verifica que las consultas rechacen fechas inválidas, rangos invertidos y plantas inexistentes.
+     */
     @Test
     public void consultasRechazanFechasInvalidasYRangosInvertidos() {
         assertThrows(RuntimeException.class, () -> sistema.histogramaCumplimiento("Solar", "2026-02-30", "2026-03-02"));
@@ -57,6 +73,9 @@ public class ConsultasAdicionalesTest {
         assertThrows(RuntimeException.class, () -> sistema.plantasInactivasEn("fecha incorrecta"));
     }
 
+    /**
+     * Prueba que minutos distintos no permitan duplicar una hora ni modificar energía o incidencias al fallar.
+     */
     @Test
     public void rechazaDosRegistrosDeLaMismaHoraSinAlterarTotal() {
         sistema.registrarMonitoreo("Solar", "2026-03-01T12:10:00", 250, 2);
@@ -67,6 +86,9 @@ public class ConsultasAdicionalesTest {
         assertEquals(1, sistema.histogramaCumplimiento("Solar", "2026-03-01", "2026-03-01")[12]);
     }
 
+    /**
+     * Comprueba el uso polimórfico de las cuotas y el límite estricto de emisiones térmicas.
+     */
     @Test
     public void cuotasUsanReglasDeCadaTipo() {
         sistema.registrarMonitoreo("Eolica", "2026-03-01T01:00:00", 200, 0, 6);
@@ -82,6 +104,9 @@ public class ConsultasAdicionalesTest {
         assertEquals(Collections.singletonList("Solar"), sistema.plantasQueNuncaCumplieronCuota());
     }
 
+    /**
+     * Comprueba el conteo por fuente, su orden alfabético y la exclusión de plantas térmicas.
+     */
     @Test
     public void fuentesOrdenadasSinContarTermicas() {
         sistema.registrarPlantaSolar("Otra solar", "Ruta", 100, INICIO, "Sol", 1, 10, 2, 12);
@@ -90,6 +115,9 @@ public class ConsultasAdicionalesTest {
         assertEquals(Integer.valueOf(2), sistema.plantasRenovablesPorFuente().get("Sol"));
     }
 
+    /**
+     * Verifica que una sola medición que alcance el mínimo excluya esa hora del informe de poco viento.
+     */
     @Test
     public void vientoAgrupaDiasYExcluyeHoraQueAlgunaVezAlcanzoElMinimo() {
         sistema.registrarMonitoreo("Eolica", "2026-03-01T01:00:00", 10, 0, 3);
@@ -101,6 +129,9 @@ public class ConsultasAdicionalesTest {
                 sistema.horasSinVelocidadMinimaPorPlantaEolica());
     }
 
+    /**
+     * Prueba la limpieza en distintos tipos, la conservación de energía e incidencias y su efecto en consultas posteriores.
+     */
     @Test
     public void limpiezaBorraSoloEnergiaEIncidenciasCeroEnTodosLosTipos() {
         sistema.registrarMonitoreo("Solar", "2026-03-01T01:00:00", 0, 0);
@@ -119,6 +150,9 @@ public class ConsultasAdicionalesTest {
         assertEquals(350, sistema.totalGenerado("Solar"), 0);
     }
 
+    /**
+     * Comprueba el orden descendente por energía y los empates, sin modificar el orden original de las plantas.
+     */
     @Test
     public void ordenamientoEstableNoCambiaElOrdenDeRegistro() {
         sistema.registrarMonitoreo("Hidro", "2026-03-01T01:00:00", 100, 0);
@@ -129,6 +163,9 @@ public class ConsultasAdicionalesTest {
         assertTrue(sistema.consultarPlantas().get(0).startsWith("Solar "));
     }
 
+    /**
+     * Verifica períodos cerrados y abiertos, cambios repetidos y los instantes exactos de desactivación y reactivación.
+     */
     @Test
     public void historialConservaVariosPeriodosYRespetaLimites() {
         sistema.desactivarPlanta("Solar", "2026-03-01T09:00:00");
@@ -151,6 +188,9 @@ public class ConsultasAdicionalesTest {
         assertTrue(sistema.estaActiva("Solar"));
     }
 
+    /**
+     * Comprueba que los registros rechazados no dejen efectos parciales y que después se pueda registrar uno válido.
+     */
     @Test
     public void datosInvalidosNoModificanTotalesNiRegistros() {
         assertThrows(RuntimeException.class,
@@ -170,6 +210,9 @@ public class ConsultasAdicionalesTest {
         assertEquals(0, sistema.totalGenerado("Termica"), 0);
     }
 
+    /**
+     * Verifica que el mapa expuesto no permita borrar registros por fuera de las operaciones de Planta.
+     */
     @Test
     public void mapaDeMonitoreosNoPermiteEvitarLasValidaciones() {
         PlantaSolar planta = new PlantaSolar("S", "Ruta", 100, LocalDateTime.parse(INICIO), "Sol", 0.5, 20, 1, 12);

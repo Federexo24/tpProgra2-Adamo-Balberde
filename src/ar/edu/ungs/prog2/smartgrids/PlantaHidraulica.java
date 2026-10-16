@@ -2,9 +2,16 @@ package ar.edu.ungs.prog2.smartgrids;
 
 import java.time.LocalDateTime;
 
+/**
+ * Representa una planta renovable hidráulica con turbinas y embalse.
+ * Calcula su cuota a partir de la capacidad máxima y la eficiencia.
+ */
 public class PlantaHidraulica extends PlantaRenovable{
 	private int cantidadTurbinas;
 	private double capacidadEmbalse;
+	/**
+	 * Valida los datos heredados y exige cantidad de turbinas y capacidad de embalse positivas.
+	 */
 	public PlantaHidraulica(String nombre, String direccion, double capacidadMaxima,
 			LocalDateTime fechaPuestaEnFuncionamiento, String fuentePrimaria, double eficienciaPromedio,
 			int cantidadTurbinas, double capacidadEmbalse) {
@@ -21,20 +28,32 @@ public class PlantaHidraulica extends PlantaRenovable{
 	}
 	
 	//Getters
+	/**
+	 * Devuelve la cantidad de turbinas instaladas.
+	 */
 	public int getCantidadTurbinas() {
 		return cantidadTurbinas;
 	}
 	
+	/**
+	 * Devuelve la capacidad declarada del embalse.
+	 */
 	public double getCapacidadEmbalse() {
 		return capacidadEmbalse;
 	}
 
 	//Métodos
+	/**
+	 * Calcula la energía mínima como capacidad máxima multiplicada por eficiencia.
+	 */
 	public double capacidadMinimaCuota() {
 		
 		return getCapacidadMaxima() * getEficienciaPromedio();
 	}
 
+	/**
+	 * Comprueba que el monitoreo sea básico y que su energía alcance o supere la cuota hidráulica.
+	 */
 	@Override
 	public boolean cumplioCuota(Monitoreo m) {
 		
