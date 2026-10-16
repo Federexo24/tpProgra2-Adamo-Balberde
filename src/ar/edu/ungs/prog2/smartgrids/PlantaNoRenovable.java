@@ -11,6 +11,15 @@ public abstract class PlantaNoRenovable extends Planta {
 			LocalDateTime fechaPuestaEnFuncionamiento, String tipoDeCombustible, double objetivoEmisionCo2Hora, double capacidadAlmacenamientoCombustible) {
 		
 		super(nombre, direccion, capacidadMaxima, fechaPuestaEnFuncionamiento);
+		if (tipoDeCombustible == null || tipoDeCombustible.isBlank()) {
+			throw new IllegalArgumentException("El tipo de combustible es obligatorio");
+		}
+		if (!Double.isFinite(objetivoEmisionCo2Hora) || objetivoEmisionCo2Hora < 0) {
+			throw new IllegalArgumentException("El objetivo de emisiones debe ser no negativo y finito");
+		}
+		if (!Double.isFinite(capacidadAlmacenamientoCombustible) || capacidadAlmacenamientoCombustible <= 0) {
+			throw new IllegalArgumentException("La capacidad de combustible debe ser positiva y finita");
+		}
 		this.capacidadAlmacenamientoCombustible= capacidadAlmacenamientoCombustible;
 		this.objetivoEmisionCo2Hora= objetivoEmisionCo2Hora;
 		this.tipoDeCombustible= tipoDeCombustible;

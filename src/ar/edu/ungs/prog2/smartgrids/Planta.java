@@ -15,6 +15,18 @@ public abstract class Planta {
 	private Map <LocalDateTime, Monitoreo> registros;
 	
 	public Planta (String nombre, String direccion, double capacidadMaxima, LocalDateTime fechaPuestaEnFuncionamiento) {
+		if (nombre == null || nombre.isBlank()) {
+			throw new IllegalArgumentException("El nombre es obligatorio");
+		}
+		if (direccion == null || direccion.isBlank()) {
+			throw new IllegalArgumentException("La direccion es obligatoria");
+		}
+		if (!Double.isFinite(capacidadMaxima) || capacidadMaxima <= 0) {
+			throw new IllegalArgumentException("La capacidad maxima debe ser positiva y finita");
+		}
+		if (fechaPuestaEnFuncionamiento == null) {
+			throw new IllegalArgumentException("La fecha es obligatoria");
+		}
 		this.nombre= nombre;
 		this.direccion= direccion;
 		this.capacidadMaxima= capacidadMaxima;

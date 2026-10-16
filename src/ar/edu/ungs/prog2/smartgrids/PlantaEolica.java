@@ -13,6 +13,15 @@ public class PlantaEolica extends PlantaRenovable{
 			LocalDateTime fechaPuestaEnFuncionamiento, String fuentePrimaria, double eficienciaPromedio, int cantidadAerogeneradores, double alturaTorres, double velocidadMinimaViento) {
 		
 		super(nombre, direccion, capacidadMaxima, fechaPuestaEnFuncionamiento, fuentePrimaria, eficienciaPromedio);
+		if (cantidadAerogeneradores <= 0) {
+			throw new IllegalArgumentException("La cantidad de aerogeneradores debe ser positiva");
+		}
+		if (!Double.isFinite(alturaTorres) || alturaTorres <= 0) {
+			throw new IllegalArgumentException("La altura de las torres debe ser positiva y finita");
+		}
+		if (!Double.isFinite(velocidadMinimaViento) || velocidadMinimaViento < 0) {
+			throw new IllegalArgumentException("La velocidad minima debe ser no negativa y finita");
+		}
 		this.alturaTorres= alturaTorres;
 		this.cantidadAerogeneradores= cantidadAerogeneradores;
 		this.velocidadMinimaViento= velocidadMinimaViento;

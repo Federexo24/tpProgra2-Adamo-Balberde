@@ -10,6 +10,12 @@ public class PlantaHidraulica extends PlantaRenovable{
 			int cantidadTurbinas, double capacidadEmbalse) {
 		
 		super(nombre, direccion, capacidadMaxima, fechaPuestaEnFuncionamiento, fuentePrimaria, eficienciaPromedio);
+		if (cantidadTurbinas <= 0) {
+			throw new IllegalArgumentException("La cantidad de turbinas debe ser positiva");
+		}
+		if (!Double.isFinite(capacidadEmbalse) || capacidadEmbalse <= 0) {
+			throw new IllegalArgumentException("La capacidad del embalse debe ser positiva y finita");
+		}
 		this.capacidadEmbalse= capacidadEmbalse;
 		this.cantidadTurbinas= cantidadTurbinas;
 	}

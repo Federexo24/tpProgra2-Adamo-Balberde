@@ -1,6 +1,7 @@
 package ar.edu.ungs.prog2.smartgrids;
 
-import java.util.HashMap;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -8,13 +9,26 @@ public class SmartGrids implements ISmartGrids {
 	private Map<String,Planta> plantas;
 	
 	public SmartGrids () {
-		this.plantas= new HashMap<>();
+		this.plantas= new LinkedHashMap<>();
 	}
 	@Override
 	public void registrarPlantaSolar(String nombre, String direccion, double capacidadMaxima,
 			String fechaHoraPuestaEnFuncionamiento, String fuentePrimaria, double eficienciaPromedio,
 			double superficieCubierta, int cantidadPaneles, double horasRadiacionDiaria) {
-		// TODO Auto-generated method stub
+		if (nombre == null || nombre.isBlank()) {
+			throw new IllegalArgumentException("El nombre es obligatorio");
+		}
+		if (plantas.containsKey(nombre)) {
+			throw new IllegalArgumentException("Ya existe una planta con ese nombre");
+		}
+		if (fechaHoraPuestaEnFuncionamiento == null) {
+			throw new IllegalArgumentException("La fecha es obligatoria");
+		}
+		LocalDateTime fecha = LocalDateTime.parse(fechaHoraPuestaEnFuncionamiento);
+		PlantaSolar planta = new PlantaSolar(nombre, direccion, capacidadMaxima, fecha,
+				fuentePrimaria, eficienciaPromedio, superficieCubierta, cantidadPaneles,
+				horasRadiacionDiaria);
+		plantas.put(nombre, planta);
 
 	}
 
