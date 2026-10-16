@@ -9,6 +9,12 @@ public class Monitoreo {
 	private int cantidadIncidencias;
 	
 	public Monitoreo (String nombrePlanta, LocalDateTime fechaHora, double energiaGenerada, int cantidadIncidencias) {
+		if (nombrePlanta == null || nombrePlanta.isBlank() || fechaHora == null) {
+			throw new IllegalArgumentException("El nombre y la fecha son obligatorios");
+		}
+		if (!Double.isFinite(energiaGenerada) || energiaGenerada < 0 || cantidadIncidencias < 0) {
+			throw new IllegalArgumentException("La energia debe ser finita y los valores no negativos");
+		}
 		this.nombrePlanta= nombrePlanta;
 		this.fechaHora= fechaHora;
 		this.energiaGenerada= energiaGenerada;
@@ -31,6 +37,11 @@ public class Monitoreo {
 	
 	public int getCantidadIncidencias () {
 		return cantidadIncidencias;
+	}
+
+	@Override
+	public String toString() {
+		return fechaHora + ": energia=" + energiaGenerada + ", incidencias=" + cantidadIncidencias;
 	}
 	
 	

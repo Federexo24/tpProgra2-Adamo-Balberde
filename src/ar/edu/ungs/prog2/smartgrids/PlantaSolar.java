@@ -41,13 +41,13 @@ public class PlantaSolar extends PlantaRenovable {
 	//Metodos
 	public double capacidadMinimaCuota() {
 		
-		return 0;
+		return getCapacidadMaxima() * getEficienciaPromedio() * (horasRadiacionDiaria / 24.0);
 	}
 
 	
 	public boolean cumplioCuota(Monitoreo m) {
 		
-		return false;
+		return m != null && aceptaMonitoreo(m) && m.getEnergiaGenerada() >= capacidadMinimaCuota();
 	}
 
 }

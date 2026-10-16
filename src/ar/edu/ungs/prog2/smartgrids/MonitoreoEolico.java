@@ -8,8 +8,10 @@ public class MonitoreoEolico extends Monitoreo{
 	
 	
 	public MonitoreoEolico (String nombrePlanta, LocalDateTime fechaHora, double energiaGenerada, int cantidadIncidencias, double velocidadVientoPromedio) {
-		//REPASAR ESTO
 		super(nombrePlanta, fechaHora, energiaGenerada, cantidadIncidencias);
+		if (!Double.isFinite(velocidadVientoPromedio) || velocidadVientoPromedio < 0) {
+			throw new IllegalArgumentException("La velocidad debe ser finita y no negativa");
+		}
 		this.velocidadVientoPromedio= velocidadVientoPromedio;
 	}
 	
@@ -17,5 +19,10 @@ public class MonitoreoEolico extends Monitoreo{
 	//Getters
 	public double getVelocidadVientoPromedio() {
 		return velocidadVientoPromedio;
+	}
+
+	@Override
+	public String toString() {
+		return super.toString() + ", viento=" + velocidadVientoPromedio + " m/s";
 	}
 }

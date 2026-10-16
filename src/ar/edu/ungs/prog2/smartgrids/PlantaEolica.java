@@ -40,16 +40,49 @@ public class PlantaEolica extends PlantaRenovable{
 		return velocidadMinimaViento;
 	}
 
+	@Override
+	protected boolean aceptaMonitoreo(Monitoreo monitoreo) {
+		return monitoreo instanceof MonitoreoEolico;
+	}
+
+	public String reporteHorasSinVelocidadMinima() {
+		boolean[] hayRegistros = new boolean[24];
+		double[] maximos = new double[24];
+		for (Monitoreo monitoreo : obtenerRegistros().values()) {
+			int hora = monitoreo.getFechaHora().getHour();
+			double velocidad = ((MonitoreoEolico) monitoreo).getVelocidadVientoPromedio();
+			hayRegistros[hora] = true;
+			maximos[hora] = Math.max(maximos[hora], velocidad);
+		}
+		StringBuilder resultado = new StringBuilder("- ").append(getNombre())
+				.append(":  ").append(formatearVelocidad(velocidadMinimaViento)).append(" m/s");
+		for (int hora = 0; hora < 24; hora++) {
+			if (hayRegistros[hora] && maximos[hora] < velocidadMinimaViento) {
+				// Se muestra el maximo observado: ni ese valor llego al minimo requerido.
+				resultado.append("\n       ");
+				if (hora < 10) {
+					resultado.append('0');
+				}
+				resultado.append(hora).append(": ").append(formatearVelocidad(maximos[hora])).append(" m/s");
+			}
+		}
+		return resultado.toString();
+	}
+
+	private String formatearVelocidad(double velocidad) {
+		return java.math.BigDecimal.valueOf(velocidad).stripTrailingZeros().toPlainString();
+	}
+
 	//Metodos
 	public double capacidadMinimaCuota() {
 		
-		return 0;
+		return getCapacidadMaxima() * getEficienciaPromedio();
 	}
 
 	
 	public boolean cumplioCuota(Monitoreo m) {
 		
-		return false;
+		return m != null && aceptaMonitoreo(m) && m.getEnergiaGenerada() >= capacidadMinimaCuota();
 	}
 
 

@@ -11,15 +11,21 @@ public class PlantaTermica extends PlantaNoRenovable{
 				capacidadAlmacenamientoCombustible);
 	}
 
+	@Override
+	protected boolean aceptaMonitoreo(Monitoreo monitoreo) {
+		return monitoreo instanceof MonitoreoTermico;
+	}
+
 	//Métodos
 	public double capacidadMinimaCuota() {
 		
-		return 0;
+		return getCapacidadMaxima() / 2.0;
 	}
 
 	public boolean cumplioCuota(Monitoreo m) {
 		
-		return false;
+		return m instanceof MonitoreoTermico && m.getEnergiaGenerada() >= capacidadMinimaCuota()
+				&& ((MonitoreoTermico) m).getCo2Generado() < getObjetivoEmisionCo2Hora();
 	}
 	
 }

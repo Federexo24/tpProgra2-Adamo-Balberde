@@ -32,13 +32,13 @@ public class PlantaHidraulica extends PlantaRenovable{
 	//Métodos
 	public double capacidadMinimaCuota() {
 		
-		return 0;
+		return getCapacidadMaxima() * getEficienciaPromedio();
 	}
 
 	@Override
 	public boolean cumplioCuota(Monitoreo m) {
 		
-		return false;
+		return m != null && aceptaMonitoreo(m) && m.getEnergiaGenerada() >= capacidadMinimaCuota();
 	}
 
 	

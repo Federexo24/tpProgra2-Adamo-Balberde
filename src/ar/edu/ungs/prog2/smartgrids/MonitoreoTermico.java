@@ -11,6 +11,10 @@ public class MonitoreoTermico extends Monitoreo{
 			int cantidadIncidencias, double co2Generado, double combustibleUtilizado) {
 			
 			super (nombrePlanta, fechaHora, energiaGenerada, cantidadIncidencias);
+			if (!Double.isFinite(co2Generado) || co2Generado < 0
+					|| !Double.isFinite(combustibleUtilizado) || combustibleUtilizado < 0) {
+				throw new IllegalArgumentException("El CO2 y el combustible deben ser finitos y no negativos");
+			}
 			this.co2Generado=co2Generado;
 			this.combustibleUtilizado= combustibleUtilizado;
 			
@@ -25,5 +29,10 @@ public class MonitoreoTermico extends Monitoreo{
 	
 	public double getCombustibleUtilizado() {
 		return combustibleUtilizado;
+	}
+
+	@Override
+	public String toString() {
+		return super.toString() + ", CO2=" + co2Generado + ", combustible=" + combustibleUtilizado;
 	}
 }
