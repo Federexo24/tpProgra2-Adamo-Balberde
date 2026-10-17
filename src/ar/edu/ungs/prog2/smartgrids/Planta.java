@@ -15,6 +15,7 @@ import java.util.Map;
  * Es abstracta porque cada tipo debe definir cómo calcula y cumple su cuota.
  */
 public abstract class Planta {
+    private final int idPlanta;
     private final String nombre;
     private final String direccion;
     private final double capacidadMaxima;
@@ -29,7 +30,10 @@ public abstract class Planta {
     /**
      * Valida los datos comunes y crea una planta activa, sin monitoreos ni períodos de inactividad.
      */
-    public Planta(String nombre, String direccion, double capacidadMaxima, LocalDateTime fechaPuestaEnFuncionamiento) {
+    public Planta(int idPlanta, String nombre, String direccion, double capacidadMaxima, LocalDateTime fechaPuestaEnFuncionamiento) {
+        if (idPlanta <= 0) {
+            throw new IllegalArgumentException("El id de planta debe ser positivo");
+        }
         if (nombre == null || nombre.isBlank()) {
             throw new IllegalArgumentException("El nombre es obligatorio");
         }
@@ -42,6 +46,7 @@ public abstract class Planta {
         if (fechaPuestaEnFuncionamiento == null) {
             throw new IllegalArgumentException("La fecha es obligatoria");
         }
+        this.idPlanta = idPlanta;
         this.nombre = nombre;
         this.direccion = direccion;
         this.capacidadMaxima = capacidadMaxima;
@@ -51,6 +56,13 @@ public abstract class Planta {
         registros = new LinkedHashMap<>();
         periodosInactivos = new LinkedList<>();
         ultimoCambioEstado = fechaPuestaEnFuncionamiento;
+    }
+
+    /**
+     * Devuelve el identificador positivo e inmutable usado en plantas y monitoreos.
+     */
+    public int getIdPlanta() {
+        return idPlanta;
     }
 
     /**
@@ -103,6 +115,22 @@ public abstract class Planta {
         if (fechaHora == null || fechaHora.isBefore(ultimoCambioEstado)) {
             throw new IllegalArgumentException("Los cambios de estado deben registrarse en orden cronologico");
         }
+    }
+
+    /**
+     * Operación sin parámetros del diagrama: activa usando el instante actual.
+     * Para registrar un instante específico se utiliza activar(LocalDateTime).
+     */
+    public void activar() {
+        activar(LocalDateTime.now());
+    }
+
+    /**
+     * Operación sin parámetros del diagrama: desactiva usando el instante actual.
+     * Conserva el historial delegando en la versión que recibe fecha y hora.
+     */
+    public void desactivar() {
+        desactivar(LocalDateTime.now());
     }
 
     /**
@@ -161,7 +189,7 @@ public abstract class Planta {
      * Solo después de validar todo guarda el registro y actualiza el total de energía.
      */
     public void registrarMonitoreo(Monitoreo monitoreo) {
-        if (monitoreo == null || !nombre.equals(monitoreo.getNombrePlanta()) || !aceptaMonitoreo(monitoreo)) {
+        if (monitoreo == null || idPlanta != monitoreo.getIdPlanta() || !aceptaMonitoreo(monitoreo)) {
             throw new IllegalArgumentException("El monitoreo no corresponde a esta planta");
         }
         LocalDateTime fecha = monitoreo.getFechaHora();
@@ -273,7 +301,7 @@ public abstract class Planta {
      */
     @Override
     public String toString() {
-        return nombre + " (" + getClass().getSimpleName() + ", " + (estaActiva ? "ACTIVA" : "INACTIVA")
+        return nombre + " [id=" + idPlanta + "] (" + getClass().getSimpleName() + ", " + (estaActiva ? "ACTIVA" : "INACTIVA")
                 + "), capacidad: " + capacidadMaxima + ", energia total: " + totalGenerado
                 + ", monitoreos: " + registros.values() + ", inactividad: " + periodosInactivos;
     }

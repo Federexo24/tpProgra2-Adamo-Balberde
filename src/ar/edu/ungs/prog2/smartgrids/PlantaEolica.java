@@ -1,6 +1,11 @@
 package ar.edu.ungs.prog2.smartgrids;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Representa una planta renovable impulsada por viento.
@@ -16,10 +21,10 @@ public class PlantaEolica extends PlantaRenovable{
 	/**
 	 * Valida los datos heredados, la cantidad de aerogeneradores, la altura y la velocidad mínima de viento.
 	 */
-	public PlantaEolica(String nombre, String direccion, double capacidadMaxima,
+	public PlantaEolica(int idPlanta, String nombre, String direccion, double capacidadMaxima,
 			LocalDateTime fechaPuestaEnFuncionamiento, String fuentePrimaria, double eficienciaPromedio, int cantidadAerogeneradores, double alturaTorres, double velocidadMinimaViento) {
 		
-		super(nombre, direccion, capacidadMaxima, fechaPuestaEnFuncionamiento, fuentePrimaria, eficienciaPromedio);
+		super(idPlanta, nombre, direccion, capacidadMaxima, fechaPuestaEnFuncionamiento, fuentePrimaria, eficienciaPromedio);
 		if (cantidadAerogeneradores <= 0) {
 			throw new IllegalArgumentException("La cantidad de aerogeneradores debe ser positiva");
 		}
@@ -70,27 +75,45 @@ public class PlantaEolica extends PlantaRenovable{
 	 * Muestra ese máximo como valor representativo de cada hora.
 	 */
 	public String reporteHorasSinVelocidadMinima() {
-		boolean[] hayRegistros = new boolean[24];
-		double[] maximos = new double[24];
-		for (Monitoreo monitoreo : obtenerRegistros().values()) {
-			int hora = monitoreo.getFechaHora().getHour();
-			double velocidad = ((MonitoreoEolico) monitoreo).getVelocidadVientoPromedio();
-			hayRegistros[hora] = true;
-			maximos[hora] = Math.max(maximos[hora], velocidad);
-		}
 		StringBuilder resultado = new StringBuilder("- ").append(getNombre())
 				.append(":  ").append(formatearVelocidad(velocidadMinimaViento)).append(" m/s");
-		for (int hora = 0; hora < 24; hora++) {
-			if (hayRegistros[hora] && maximos[hora] < velocidadMinimaViento) {
-				// Se muestra el maximo observado: ni ese valor llego al minimo requerido.
-				resultado.append("\n       ");
-				if (hora < 10) {
-					resultado.append('0');
-				}
-				resultado.append(hora).append(": ").append(formatearVelocidad(maximos[hora])).append(" m/s");
+		for (Map.Entry<LocalTime, Double> entrada : velocidadesInsuficientesPorHora().entrySet()) {
+			int hora = entrada.getKey().getHour();
+			resultado.append("\n       ");
+			if (hora < 10) {
+				resultado.append('0');
 			}
+			resultado.append(hora).append(": ").append(formatearVelocidad(entrada.getValue())).append(" m/s");
 		}
 		return resultado.toString();
+	}
+
+	/**
+	 * Devuelve las horas que nunca alcanzaron el viento mínimo, ordenadas de 00 a 23.
+	 * Comparte el mismo cálculo con el informe de texto para que ambos resultados coincidan.
+	 */
+	public Set<LocalTime> horasSinVelocidadMinima() {
+		return new LinkedHashSet<>(velocidadesInsuficientesPorHora().keySet());
+	}
+
+	/**
+	 * Agrupa por hora los máximos de viento y conserva solo los menores al mínimo requerido.
+	 * Las horas sin registros no se incluyen en el resultado.
+	 */
+	private Map<LocalTime, Double> velocidadesInsuficientesPorHora() {
+		Map<LocalTime, Double> maximos = new TreeMap<>();
+		for (Monitoreo monitoreo : obtenerRegistros().values()) {
+			LocalTime hora = LocalTime.of(monitoreo.getFechaHora().getHour(), 0);
+			double velocidad = ((MonitoreoEolico) monitoreo).getVelocidadVientoPromedio();
+			maximos.put(hora, Math.max(maximos.getOrDefault(hora, 0.0), velocidad));
+		}
+		Map<LocalTime, Double> resultado = new TreeMap<>();
+		for (Map.Entry<LocalTime, Double> entrada : maximos.entrySet()) {
+			if (entrada.getValue() < velocidadMinimaViento) {
+				resultado.put(entrada.getKey(), entrada.getValue());
+			}
+		}
+		return resultado;
 	}
 
 	/**

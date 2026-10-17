@@ -2,26 +2,35 @@ package ar.edu.ungs.prog2.smartgrids;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * Administra las plantas por nombre y ofrece las operaciones de ISmartGrids.
+ * Almacena plantas por id y mantiene un índice de nombres para ofrecer las operaciones de ISmartGrids.
  * Delega las reglas de cada tipo en las subclases de Planta: así se aplica el polimorfismo.
  */
 public class SmartGrids implements ISmartGrids {
-    private final Map<String, Planta> plantas;
+    private final Map<Integer, Planta> plantas;
+    // Índice auxiliar: permite buscar por nombre en O(1) esperado sin recorrer las plantas.
+    private final Map<String, Integer> idsPorNombre;
+    // long permite detectar el agotamiento de identificadores sin desbordar un int.
+    private long proximoId = 1;
 
     /**
-     * Crea un sistema vacío. LinkedHashMap permite buscar por nombre y conservar el orden de alta.
+     * Crea un sistema vacío. LinkedHashMap conserva el orden de alta y el índice resuelve búsquedas por nombre.
      */
     public SmartGrids() {
         plantas = new LinkedHashMap<>();
+        idsPorNombre = new HashMap<>();
     }
 
     /**
@@ -32,10 +41,161 @@ public class SmartGrids implements ISmartGrids {
         if (nombre == null || nombre.isBlank()) {
             throw new IllegalArgumentException("El nombre es obligatorio");
         }
-        if (plantas.containsKey(nombre)) {
+        if (idsPorNombre.containsKey(nombre)) {
             throw new IllegalArgumentException("Ya existe una planta con ese nombre");
         }
         return parsearFechaHora(fechaHora);
+    }
+
+    /**
+     * Reserva un id positivo para las altas realizadas mediante ISmartGrids.
+     * Los ids son únicos en este sistema; una construcción fallida puede dejar un salto.
+     */
+    private int generarId() {
+        if (proximoId > Integer.MAX_VALUE) {
+            throw new IllegalStateException("Se agotaron los identificadores de plantas");
+        }
+        return (int) proximoId++;
+    }
+
+    /**
+     * Operación del diagrama: incorpora una planta ya construida.
+     * Rechaza ids o nombres repetidos antes de actualizar ambos mapas.
+     */
+    public void registrarPlanta(Planta planta) {
+        if (planta == null) {
+            throw new IllegalArgumentException("La planta es obligatoria");
+        }
+        if (plantas.containsKey(planta.getIdPlanta()) || idsPorNombre.containsKey(planta.getNombre())) {
+            throw new IllegalArgumentException("Ya existe una planta con ese id o nombre");
+        }
+        plantas.put(planta.getIdPlanta(), planta);
+        idsPorNombre.put(planta.getNombre(), planta.getIdPlanta());
+        proximoId = Math.max(proximoId, (long) planta.getIdPlanta() + 1);
+    }
+
+    /**
+     * Devuelve el objeto Planta registrado, como propone el diagrama.
+     * Es el objeto administrado por el sistema, no una copia.
+     */
+    public Planta consultarPlanta(String nombre) {
+        return buscarPlanta(nombre);
+    }
+
+    /**
+     * Devuelve una lista nueva de los objetos registrados, en orden de alta.
+     * Se usa otro nombre porque consultarPlantas() debe devolver List<String> por ISmartGrids.
+     */
+    public List<Planta> consultarObjetosPlanta() {
+        return new ArrayList<>(plantas.values());
+    }
+
+    /**
+     * Conserva el nombre de la consulta de cuota del diagrama y reutiliza la regla de la planta.
+     */
+    public double consultarCapacidadMinimaDeCuota(String nombre) {
+        return capacidadMinimaCuota(nombre);
+    }
+
+    /**
+     * Operación del diagrama: actualiza el estado usando la fecha y hora actuales.
+     * Para fechas históricas se usan activarPlanta o desactivarPlanta con fecha explícita.
+     */
+    public void actualizarEstado(String nombre, boolean estado) {
+        Planta planta = buscarPlanta(nombre);
+        if (estado) {
+            planta.activar();
+        } else {
+            planta.desactivar();
+        }
+    }
+
+    /**
+     * Recibe un monitoreo ya construido, como indica el diagrama.
+     * Planta verifica que su id coincida con el del registro y aplica las demás validaciones.
+     */
+    public void registrarMonitoreo(String nombre, Monitoreo monitoreo) {
+        buscarPlanta(nombre).registrarMonitoreo(monitoreo);
+    }
+
+    /**
+     * Ofrece el nombre del diagrama para consultar la energía acumulada.
+     */
+    public double obtenerTotalGenerado(String nombre) {
+        return totalGenerado(nombre);
+    }
+
+    /**
+     * Devuelve las incidencias acumuladas para la hora del día indicada, entre todos los registros.
+     * Se toma solo getHour(): el día del parámetro no filtra la consulta del punto 6.
+     */
+    public int consultarIncidenciasPorHora(String nombre, LocalDateTime hora) {
+        if (hora == null) {
+            throw new IllegalArgumentException("La hora es obligatoria");
+        }
+        return incidenciasPorHora(nombre)[hora.getHour()];
+    }
+
+    /**
+     * Adapta el histograma al mapa de hora a cantidad de días del diagrama.
+     * Incluye las 24 horas, incluso las que tienen cero cumplimientos.
+     */
+    public Map<Integer, Integer> calcularHistogramaCumplimiento(String nombre, LocalDate desde, LocalDate hasta) {
+        int[] histograma = buscarPlanta(nombre).histogramaCumplimiento(desde, hasta);
+        Map<Integer, Integer> resultado = new LinkedHashMap<>();
+        for (int hora = 0; hora < histograma.length; hora++) {
+            resultado.put(hora, histograma[hora]);
+        }
+        return resultado;
+    }
+
+    /**
+     * Conserva el nombre del diagrama para el conteo de renovables por fuente.
+     */
+    public Map<String, Integer> contarRenovablesPorFuente() {
+        return plantasRenovablesPorFuente();
+    }
+
+    /**
+     * Devuelve los objetos Planta que no tienen registros conservados de cumplimiento.
+     * Incluye las plantas sin monitoreos y mantiene el orden de registro.
+     */
+    public List<Planta> obtenerPlantasQueNuncaCumplieronCuota() {
+        List<Planta> resultado = new ArrayList<>();
+        for (Planta planta : plantas.values()) {
+            if (!planta.cumplioAlgunaCuota()) {
+                resultado.add(planta);
+            }
+        }
+        return resultado;
+    }
+
+    /**
+     * Devuelve el mapa del diagrama: cada planta eólica y sus horas con viento siempre insuficiente.
+     * LocalTime representa cada hora con minutos y segundos en cero; los conjuntos son nuevos.
+     */
+    public Map<PlantaEolica, Set<LocalTime>> obtenerHorasSinVelocidadMinima() {
+        Map<PlantaEolica, Set<LocalTime>> resultado = new LinkedHashMap<>();
+        for (Planta planta : plantas.values()) {
+            if (planta instanceof PlantaEolica) {
+                PlantaEolica eolica = (PlantaEolica) planta;
+                resultado.put(eolica, eolica.horasSinVelocidadMinima());
+            }
+        }
+        return resultado;
+    }
+
+    /**
+     * Consulta si el monitoreo de una fecha y hora cumplió la cuota; devuelve false si no hay registro.
+     * Minutos y segundos se descartan para buscar la hora completa usada como clave.
+     */
+    public boolean consultarCumplioCuota(String nombre, LocalDateTime hora) {
+        Planta planta = buscarPlanta(nombre);
+        if (hora == null) {
+            throw new IllegalArgumentException("La hora es obligatoria");
+        }
+        Monitoreo monitoreo = planta.obtenerRegistros().get(hora.truncatedTo(ChronoUnit.HOURS));
+        return monitoreo != null && planta.cumplioCuota(monitoreo);
     }
 
     /**
@@ -54,7 +214,8 @@ public class SmartGrids implements ISmartGrids {
      * Lanza una excepción si no existe, para evitar que las consultas devuelvan datos engañosos.
      */
     private Planta buscarPlanta(String nombre) {
-        Planta planta = plantas.get(nombre);
+        Integer id = idsPorNombre.get(nombre);
+        Planta planta = plantas.get(id);
         if (planta == null) {
             throw new IllegalArgumentException("No existe la planta: " + nombre);
         }
@@ -62,7 +223,7 @@ public class SmartGrids implements ISmartGrids {
     }
 
     /**
-     * Valida el alta, construye una planta solar y la guarda por nombre.
+     * Valida el alta, construye una planta solar y la registra por id con su índice de nombre.
      * Los constructores verifican los datos antes de que se modifique el mapa.
      */
     @Override
@@ -70,9 +231,9 @@ public class SmartGrids implements ISmartGrids {
             String fechaHoraPuestaEnFuncionamiento, String fuentePrimaria, double eficienciaPromedio,
             double superficieCubierta, int cantidadPaneles, double horasRadiacionDiaria) {
         LocalDateTime fecha = validarAlta(nombre, fechaHoraPuestaEnFuncionamiento);
-        Planta planta = new PlantaSolar(nombre, direccion, capacidadMaxima, fecha,
+        Planta planta = new PlantaSolar(generarId(), nombre, direccion, capacidadMaxima, fecha,
                 fuentePrimaria, eficienciaPromedio, superficieCubierta, cantidadPaneles, horasRadiacionDiaria);
-        plantas.put(nombre, planta);
+        registrarPlanta(planta);
     }
 
     /**
@@ -83,9 +244,9 @@ public class SmartGrids implements ISmartGrids {
             String fechaHoraPuestaEnFuncionamiento, String fuentePrimaria, double eficienciaPromedio,
             int cantidadAerogeneradores, double alturaTorres, double velocidadMinimaViento) {
         LocalDateTime fecha = validarAlta(nombre, fechaHoraPuestaEnFuncionamiento);
-        Planta planta = new PlantaEolica(nombre, direccion, capacidadMaxima, fecha,
+        Planta planta = new PlantaEolica(generarId(), nombre, direccion, capacidadMaxima, fecha,
                 fuentePrimaria, eficienciaPromedio, cantidadAerogeneradores, alturaTorres, velocidadMinimaViento);
-        plantas.put(nombre, planta);
+        registrarPlanta(planta);
     }
 
     /**
@@ -96,9 +257,9 @@ public class SmartGrids implements ISmartGrids {
             String fechaHoraPuestaEnFuncionamiento, String fuentePrimaria, double eficienciaPromedio,
             int cantidadTurbinas, double capacidadEmbalse) {
         LocalDateTime fecha = validarAlta(nombre, fechaHoraPuestaEnFuncionamiento);
-        Planta planta = new PlantaHidraulica(nombre, direccion, capacidadMaxima, fecha,
+        Planta planta = new PlantaHidraulica(generarId(), nombre, direccion, capacidadMaxima, fecha,
                 fuentePrimaria, eficienciaPromedio, cantidadTurbinas, capacidadEmbalse);
-        plantas.put(nombre, planta);
+        registrarPlanta(planta);
     }
 
     /**
@@ -109,9 +270,9 @@ public class SmartGrids implements ISmartGrids {
             String fechaHoraPuestaEnFuncionamiento, String tipoCombustible, double objetivoEmisionesCo2PorHora,
             double capacidadAlmacenamientoCombustible) {
         LocalDateTime fecha = validarAlta(nombre, fechaHoraPuestaEnFuncionamiento);
-        Planta planta = new PlantaTermica(nombre, direccion, capacidadMaxima, fecha,
+        Planta planta = new PlantaTermica(generarId(), nombre, direccion, capacidadMaxima, fecha,
                 tipoCombustible, objetivoEmisionesCo2PorHora, capacidadAlmacenamientoCombustible);
-        plantas.put(nombre, planta);
+        registrarPlanta(planta);
     }
 
     /**
@@ -169,8 +330,9 @@ public class SmartGrids implements ISmartGrids {
      */
     @Override
     public void registrarMonitoreo(String nombre, String fechaHora, double energiaGenerada, int incidencias) {
-        buscarPlanta(nombre).registrarMonitoreo(
-                new Monitoreo(nombre, parsearFechaHora(fechaHora), energiaGenerada, incidencias));
+        Planta planta = buscarPlanta(nombre);
+        planta.registrarMonitoreo(
+                new Monitoreo(planta.getIdPlanta(), parsearFechaHora(fechaHora), energiaGenerada, incidencias));
     }
 
     /**
@@ -180,8 +342,9 @@ public class SmartGrids implements ISmartGrids {
     @Override
     public void registrarMonitoreo(String nombre, String fechaHora, double energiaGenerada, int incidencias,
             double velocidadViento) {
-        buscarPlanta(nombre).registrarMonitoreo(
-                new MonitoreoEolico(nombre, parsearFechaHora(fechaHora), energiaGenerada, incidencias, velocidadViento));
+        Planta planta = buscarPlanta(nombre);
+        planta.registrarMonitoreo(
+                new MonitoreoEolico(planta.getIdPlanta(), parsearFechaHora(fechaHora), energiaGenerada, incidencias, velocidadViento));
     }
 
     /**
@@ -191,7 +354,8 @@ public class SmartGrids implements ISmartGrids {
     @Override
     public void registrarMonitoreo(String nombre, String fechaHora, double energiaGenerada, int incidencias,
             double co2Emitido, double combustibleUtilizado) {
-        buscarPlanta(nombre).registrarMonitoreo(new MonitoreoTermico(nombre, parsearFechaHora(fechaHora),
+        Planta planta = buscarPlanta(nombre);
+        planta.registrarMonitoreo(new MonitoreoTermico(planta.getIdPlanta(), parsearFechaHora(fechaHora),
                 energiaGenerada, incidencias, co2Emitido, combustibleUtilizado));
     }
 

@@ -11,10 +11,10 @@ public class PlantaTermica extends PlantaNoRenovable{
 	/**
 	 * Construye la planta térmica delegando en super las validaciones comunes y del combustible.
 	 */
-	public PlantaTermica(String nombre, String direccion, double capacidadMaxima,
+	public PlantaTermica(int idPlanta, String nombre, String direccion, double capacidadMaxima,
 			LocalDateTime fechaPuestaEnFuncionamiento, String tipoDeCombustible, double objetivoEmisionCo2Hora,
 			double capacidadAlmacenamientoCombustible) {
-		super(nombre, direccion, capacidadMaxima, fechaPuestaEnFuncionamiento, tipoDeCombustible, objetivoEmisionCo2Hora,
+		super(idPlanta, nombre, direccion, capacidadMaxima, fechaPuestaEnFuncionamiento, tipoDeCombustible, objetivoEmisionCo2Hora,
 				capacidadAlmacenamientoCombustible);
 	}
 

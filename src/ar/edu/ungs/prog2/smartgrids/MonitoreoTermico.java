@@ -13,10 +13,10 @@ public class MonitoreoTermico extends Monitoreo{
 	/**
 	 * Valida los datos comunes y exige CO2 y combustible finitos y no negativos.
 	 */
-	public MonitoreoTermico (String nombrePlanta, LocalDateTime fechaHora, double energiaGenerada,
+	public MonitoreoTermico (int idPlanta, LocalDateTime fechaHora, double energiaGenerada,
 			int cantidadIncidencias, double co2Generado, double combustibleUtilizado) {
 			
-			super (nombrePlanta, fechaHora, energiaGenerada, cantidadIncidencias);
+			super (idPlanta, fechaHora, energiaGenerada, cantidadIncidencias);
 			if (!Double.isFinite(co2Generado) || co2Generado < 0
 					|| !Double.isFinite(combustibleUtilizado) || combustibleUtilizado < 0) {
 				throw new IllegalArgumentException("El CO2 y el combustible deben ser finitos y no negativos");

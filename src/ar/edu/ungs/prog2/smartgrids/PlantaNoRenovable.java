@@ -15,10 +15,10 @@ public abstract class PlantaNoRenovable extends Planta {
 	 * Valida los datos de Planta y los atributos del combustible.
 	 * Exige un objetivo de emisiones no negativo y una capacidad de almacenamiento positiva y finita.
 	 */
-	public PlantaNoRenovable(String nombre, String direccion, double capacidadMaxima,
+	public PlantaNoRenovable(int idPlanta, String nombre, String direccion, double capacidadMaxima,
 			LocalDateTime fechaPuestaEnFuncionamiento, String tipoDeCombustible, double objetivoEmisionCo2Hora, double capacidadAlmacenamientoCombustible) {
 		
-		super(nombre, direccion, capacidadMaxima, fechaPuestaEnFuncionamiento);
+		super(idPlanta, nombre, direccion, capacidadMaxima, fechaPuestaEnFuncionamiento);
 		if (tipoDeCombustible == null || tipoDeCombustible.isBlank()) {
 			throw new IllegalArgumentException("El tipo de combustible es obligatorio");
 		}

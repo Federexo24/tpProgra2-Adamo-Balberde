@@ -15,8 +15,8 @@ public abstract class PlantaRenovable extends Planta {
 	/**
 	 * Valida los datos comunes mediante super y exige fuente no vacía y eficiencia entre 0 y 1.
 	 */
-	public PlantaRenovable (String nombre, String direccion, double capacidadMaxima, LocalDateTime fechaPuestaEnFuncionamiento, String fuentePrimaria, double eficienciaPromedio) {
-		super(nombre, direccion, capacidadMaxima, fechaPuestaEnFuncionamiento);
+	public PlantaRenovable (int idPlanta, String nombre, String direccion, double capacidadMaxima, LocalDateTime fechaPuestaEnFuncionamiento, String fuentePrimaria, double eficienciaPromedio) {
+		super(idPlanta, nombre, direccion, capacidadMaxima, fechaPuestaEnFuncionamiento);
 		if (fuentePrimaria == null || fuentePrimaria.isBlank()) {
 			throw new IllegalArgumentException("La fuente primaria es obligatoria");
 		}

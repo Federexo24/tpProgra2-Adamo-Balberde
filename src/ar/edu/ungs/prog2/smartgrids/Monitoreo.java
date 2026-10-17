@@ -3,26 +3,26 @@ package ar.edu.ungs.prog2.smartgrids;
 import java.time.LocalDateTime;
 
 /**
- * Guarda los datos de una medición horaria: planta, fecha y hora, energía e incidencias.
+ * Guarda los datos de una medición horaria: id de planta, fecha y hora, energía e incidencias.
  * Sirve directamente para solares e hidráulicas y como base de los registros especializados.
  */
 public class Monitoreo {
-	private String nombrePlanta;
+	private final int idPlanta;
 	private LocalDateTime fechaHora;
 	private double energiaGenerada;
 	private int cantidadIncidencias;
 	
 	/**
-	 * Crea una medición con nombre y fecha obligatorios, energía finita no negativa e incidencias no negativas.
+	 * Crea una medición con id de planta positivo y fecha obligatoria, energía finita no negativa e incidencias no negativas.
 	 */
-	public Monitoreo (String nombrePlanta, LocalDateTime fechaHora, double energiaGenerada, int cantidadIncidencias) {
-		if (nombrePlanta == null || nombrePlanta.isBlank() || fechaHora == null) {
-			throw new IllegalArgumentException("El nombre y la fecha son obligatorios");
+	public Monitoreo (int idPlanta, LocalDateTime fechaHora, double energiaGenerada, int cantidadIncidencias) {
+		if (idPlanta <= 0 || fechaHora == null) {
+			throw new IllegalArgumentException("El id debe ser positivo y la fecha es obligatoria");
 		}
 		if (!Double.isFinite(energiaGenerada) || energiaGenerada < 0 || cantidadIncidencias < 0) {
 			throw new IllegalArgumentException("La energia debe ser finita y los valores no negativos");
 		}
-		this.nombrePlanta= nombrePlanta;
+		this.idPlanta= idPlanta;
 		this.fechaHora= fechaHora;
 		this.energiaGenerada= energiaGenerada;
 		this.cantidadIncidencias= cantidadIncidencias;
@@ -31,10 +31,10 @@ public class Monitoreo {
 	//Getters 
 	
 	/**
-	 * Devuelve el nombre de la planta a la que pertenece la medición.
+	 * Devuelve el identificador de la planta a la que pertenece la medición.
 	 */
-	public String getNombrePlanta() {
-		return nombrePlanta;
+	public int getIdPlanta() {
+		return idPlanta;
 	}
 	
 	/**

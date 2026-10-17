@@ -13,8 +13,8 @@ public class MonitoreoEolico extends Monitoreo{
 	/**
 	 * Valida los datos comunes con super y exige una velocidad finita y no negativa.
 	 */
-	public MonitoreoEolico (String nombrePlanta, LocalDateTime fechaHora, double energiaGenerada, int cantidadIncidencias, double velocidadVientoPromedio) {
-		super(nombrePlanta, fechaHora, energiaGenerada, cantidadIncidencias);
+	public MonitoreoEolico (int idPlanta, LocalDateTime fechaHora, double energiaGenerada, int cantidadIncidencias, double velocidadVientoPromedio) {
+		super(idPlanta, fechaHora, energiaGenerada, cantidadIncidencias);
 		if (!Double.isFinite(velocidadVientoPromedio) || velocidadVientoPromedio < 0) {
 			throw new IllegalArgumentException("La velocidad debe ser finita y no negativa");
 		}

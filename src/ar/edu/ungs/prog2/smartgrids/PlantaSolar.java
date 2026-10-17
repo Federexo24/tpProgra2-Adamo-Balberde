@@ -14,9 +14,9 @@ public class PlantaSolar extends PlantaRenovable {
 	/**
 	 * Valida los datos heredados y exige superficie y paneles positivos, y radiación entre 0 y 24 horas.
 	 */
-	public PlantaSolar(String nombre, String direccion, double capacidadMaxima,
+	public PlantaSolar(int idPlanta, String nombre, String direccion, double capacidadMaxima,
 			LocalDateTime fechaPuestaEnFuncionamiento, String fuentePrimaria, double eficienciaPromedio, double superficieCubierta, int cantidadPaneles, double horasRadiacionDiaria) {
-		super(nombre, direccion, capacidadMaxima, fechaPuestaEnFuncionamiento, fuentePrimaria, eficienciaPromedio);
+		super(idPlanta, nombre, direccion, capacidadMaxima, fechaPuestaEnFuncionamiento, fuentePrimaria, eficienciaPromedio);
 		if (!Double.isFinite(superficieCubierta) || superficieCubierta <= 0) {
 			throw new IllegalArgumentException("La superficie debe ser positiva y finita");
 		}

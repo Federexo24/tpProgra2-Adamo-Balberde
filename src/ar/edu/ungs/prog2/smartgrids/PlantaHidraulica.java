@@ -12,11 +12,11 @@ public class PlantaHidraulica extends PlantaRenovable{
 	/**
 	 * Valida los datos heredados y exige cantidad de turbinas y capacidad de embalse positivas.
 	 */
-	public PlantaHidraulica(String nombre, String direccion, double capacidadMaxima,
+	public PlantaHidraulica(int idPlanta, String nombre, String direccion, double capacidadMaxima,
 			LocalDateTime fechaPuestaEnFuncionamiento, String fuentePrimaria, double eficienciaPromedio,
 			int cantidadTurbinas, double capacidadEmbalse) {
 		
-		super(nombre, direccion, capacidadMaxima, fechaPuestaEnFuncionamiento, fuentePrimaria, eficienciaPromedio);
+		super(idPlanta, nombre, direccion, capacidadMaxima, fechaPuestaEnFuncionamiento, fuentePrimaria, eficienciaPromedio);
 		if (cantidadTurbinas <= 0) {
 			throw new IllegalArgumentException("La cantidad de turbinas debe ser positiva");
 		}
